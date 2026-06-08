@@ -1,0 +1,62 @@
+# netlify.toml — Netlify deployment configuration for Next.js
+
+[build]
+  command   = "pnpm build"
+  publish   = ".next"
+
+[build.environment]
+  PNPM_FLAGS = "--frozen-lockfile"
+
+# ═══════════════════════════════════════════════════════
+# Environment Variables by Context
+# ═══════════════════════════════════════════════════════
+# Override in Netlify UI for secrets (AUTH_SECRET, DATABASE_URL, etc.)
+
+[context.production.environment]
+  DUMMY_DATA_ENABLED = "false"
+
+[context.deploy-preview.environment]
+  DUMMY_DATA_ENABLED = "true"
+
+[context.branch-deploy.environment]
+  DUMMY_DATA_ENABLED = "true"
+
+# ═══════════════════════════════════════════════════════
+# Security Headers
+# ═══════════════════════════════════════════════════════
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options  = "nosniff"
+    X-Frame-Options         = "DENY"
+    X-XSS-Protection        = "1; mode=block"
+    Referrer-Policy         = "strict-origin-when-cross-origin"
+    Permissions-Policy      = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.(svg|png|jpg|jpeg|webp|avif|gif|ico|woff|woff2)"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ═══════════════════════════════════════════════════════
+# Redirects & Rewrites (add as needed)
+# ═══════════════════════════════════════════════════════
+
+# Example: redirect old URL to new one
+# [[redirects]]
+#   from = "/old-page"
+#   to   = "/new-page"
+#   status = 301
+
+# ═══════════════════════════════════════════════════════
+# Netlify Next.js Plugin (auto-detected, explicit here)
+# ═══════════════════════════════════════════════════════
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
