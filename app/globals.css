@@ -128,3 +128,200 @@
     @apply font-sans;
   }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Animation Keyframes
+   ═══════════════════════════════════════════════════════ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-left {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-right {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-in-up {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 0.8;  }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes slide-in-bottom {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Animation Utilities
+   ═══════════════════════════════════════════════════════ */
+
+@utility animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+@utility animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+@utility animate-fade-down {
+  animation: fade-down 0.4s ease-out both;
+}
+
+@utility animate-fade-left {
+  animation: fade-left 0.5s ease-out both;
+}
+
+@utility animate-fade-right {
+  animation: fade-right 0.5s ease-out both;
+}
+
+@utility animate-scale-in {
+  animation: scale-in 0.4s ease-out both;
+}
+
+@utility animate-scale-in-up {
+  animation: scale-in-up 0.5s ease-out both;
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    oklch(1 0 0 / 0.06) 40%,
+    oklch(1 0 0 / 0.1) 50%,
+    oklch(1 0 0 / 0.06) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@utility animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@utility animate-slide-in-right {
+  animation: slide-in-right 0.4s ease-out both;
+}
+
+@utility animate-slide-in-bottom {
+  animation: slide-in-bottom 0.4s ease-out both;
+}
+
+/* ── Stagger Delays ──────────────────────────── */
+
+@utility animate-delay-100 {
+  animation-delay: 100ms;
+}
+@utility animate-delay-200 {
+  animation-delay: 200ms;
+}
+@utility animate-delay-300 {
+  animation-delay: 300ms;
+}
+@utility animate-delay-400 {
+  animation-delay: 400ms;
+}
+@utility animate-delay-500 {
+  animation-delay: 500ms;
+}
+@utility animate-delay-700 {
+  animation-delay: 700ms;
+}
+@utility animate-delay-1000 {
+  animation-delay: 1000ms;
+}
+
+/* ── Reduced Motion ──────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
