@@ -1,0 +1,83 @@
+-- Seed data for local development.
+-- Mirrors lib/dummy-data.ts, adapted for the public.* schema.
+-- Note: auth.users must be created via the Supabase Auth API, not raw SQL.
+-- Use the Supabase dashboard or API to create test users, then run this seed.
+
+-- ══════════════════════════════════════════
+-- Profiles (run AFTER creating auth users)
+-- ══════════════════════════════════════════
+-- Replace the UUIDs below with the actual auth.users IDs created via:
+--   Dashboard → Authentication → Users → Add User
+-- Or via the sign-up API.
+
+-- INSERT INTO public.profiles (id, role_id, email, full_name)
+-- VALUES
+--   ('auth-user-uuid-001', (SELECT id FROM public.roles WHERE name = 'Admin'),      'sakura.tanaka@attandance.com', 'Sakura Tanaka'),
+--   ('auth-user-uuid-002', (SELECT id FROM public.roles WHERE name = 'Instructor'), 'kai.yamamoto@attandance.com',   'Kai Yamamoto'),
+--   ('auth-user-uuid-003', (SELECT id FROM public.roles WHERE name = 'Instructor'), 'luna.park@attandance.com',      'Luna Park'),
+--   ('auth-user-uuid-004', (SELECT id FROM public.roles WHERE name = 'Member'),     'riko.sato@attandance.com',      'Riko Sato'),
+--   ('auth-user-uuid-005', (SELECT id FROM public.roles WHERE name = 'Member'),     'jihoon.kim@attandance.com',     'Jihoon Kim'),
+--   ('auth-user-uuid-006', (SELECT id FROM public.roles WHERE name = 'Member'),     'aria.nguyen@attandance.com',    'Aria Nguyen'),
+--   ('auth-user-uuid-007', (SELECT id FROM public.roles WHERE name = 'Member'),     'marco.rossi@attandance.com',    'Marco Rossi'),
+--   ('auth-user-uuid-008', (SELECT id FROM public.roles WHERE name = 'Member'),     'zara.williams@attandance.com',  'Zara Williams');
+
+-- ══════════════════════════════════════════
+-- Artist Records (run AFTER profiles exist)
+-- ══════════════════════════════════════════
+-- INSERT INTO public.artist_records (user_id, stage_name, specialty, join_date)
+-- VALUES
+--   ('auth-user-uuid-001', 'Sakura Blossom', 'Contemporary',         '2024-06-01'),
+--   ('auth-user-uuid-002', 'K-Flow',         'Hip-Hop',              '2024-06-15'),
+--   ('auth-user-uuid-003', 'Luna Eclipse',   'Ballet / Jazz Fusion', '2024-07-01'),
+--   ('auth-user-uuid-004', 'Riko Beat',      'Street / Breaking',    '2024-08-10'),
+--   ('auth-user-uuid-005', 'J-Shadow',       'Popping & Locking',    '2024-08-12'),
+--   ('auth-user-uuid-006', 'Aria Motion',    'Modern / Lyrical',     '2024-09-01'),
+--   ('auth-user-uuid-007', 'M-Roc',          'Latin / Salsa',        '2024-09-15'),
+--   ('auth-user-uuid-008', 'Zara Flame',     'Afrobeat / Dancehall', '2024-10-01');
+
+-- ══════════════════════════════════════════
+-- Attendance
+-- ══════════════════════════════════════════
+-- INSERT INTO public.attendance (artist_record_id, session_date, status, notes) VALUES
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Sakura Blossom'), '2025-06-02 10:00:00+00', 'Present', 'Full routine run-through. Excellent form.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Sakura Blossom'), '2025-06-03 10:00:00+00', 'Present', NULL),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Sakura Blossom'), '2025-06-05 10:00:00+00', 'Late',    'Arrived 15 min late — traffic.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'K-Flow'),         '2025-06-02 10:00:00+00', 'Present', 'Nailed the freestyle section.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'K-Flow'),         '2025-06-03 10:00:00+00', 'Absent',  'Informed sick via email.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Luna Eclipse'),   '2025-06-02 10:00:00+00', 'Present', NULL),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Luna Eclipse'),   '2025-06-03 10:00:00+00', 'Present', 'Working on new jazz choreography.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Riko Beat'),      '2025-06-02 10:00:00+00', 'Present', 'Great energy in break battles.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'J-Shadow'),       '2025-06-02 10:00:00+00', 'Present', NULL),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'J-Shadow'),       '2025-06-03 10:00:00+00', 'Present', 'Popping drills — sharp improvement.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Aria Motion'),    '2025-06-02 10:00:00+00', 'Late',    'Missed warm-up; joined after 10 min.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'M-Roc'),          '2025-06-02 10:00:00+00', 'Present', 'Partner salsa — smooth transitions.'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'M-Roc'),          '2025-06-05 10:00:00+00', 'Absent',  NULL),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Zara Flame'),     '2025-06-02 10:00:00+00', 'Present', 'Afrobeat energy is contagious!');
+
+-- ══════════════════════════════════════════
+-- Injuries
+-- ══════════════════════════════════════════
+-- INSERT INTO public.injuries (artist_record_id, incident_date, severity, description, status) VALUES
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Riko Beat'),   '2025-05-20', 'Moderate', 'Ankle sprain during a floor spin. Iced and wrapped on site.', 'Recovering'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'K-Flow'),      '2025-05-15', 'Minor',    'Neck stiffness after an extended headspin session. Recommended rest.', 'Cleared'),
+--   ((SELECT id FROM public.artist_records WHERE stage_name = 'Aria Motion'), '2025-06-01', 'Minor',    'Shin splints from over-practicing lyrical jumps.', 'Under Treatment');
+
+-- ══════════════════════════════════════════
+-- Posts
+-- ══════════════════════════════════════════
+-- INSERT INTO public.posts (user_id, title, body) VALUES
+--   ('auth-user-uuid-002', '🔥 Hip-Hop Workshop Recap', 'Massive thanks to everyone who showed up for the Saturday workshop! The energy in the room was unreal. We broke down popping fundamentals and ended with an epic cipher. Video dropping soon — stay tuned! 🎥'),
+--   ('auth-user-uuid-003', 'New Jazz Fusion Routine 🌙', 'Been experimenting with blending classical ballet lines with modern jazz isolations. The result feels like liquid moonlight. Cannot wait to showcase this at the upcoming recital. Who is excited? 💫'),
+--   ('auth-user-uuid-001', '📢 Important: Schedule Change Next Week', 'Attention all members! Monday and Wednesday classes will swap time slots next week due to the venue renovation. Check the updated calendar on the bulletin board. Reach out if you have any conflicts.'),
+--   ('auth-user-uuid-005', 'Popping Practice — 100 Day Challenge', 'Day 47 of my 100-day popping challenge and the control is finally starting to click. Consistency > intensity. Trust the process. ✨'),
+--   ('auth-user-uuid-008', 'Afrobeat Fridays are BACK 🥁', 'Starting this Friday we are bringing back the Afrobeat open sessions! All levels welcome. Come through, bring your energy, and let us move together. 7 PM at Studio B. Spread the word! 🔊');
+
+-- ══════════════════════════════════════════
+-- Comments
+-- ══════════════════════════════════════════
+-- (Insert after posts exist — use subqueries by title)
+
+-- ══════════════════════════════════════════
+-- Reactions
+-- ══════════════════════════════════════════
+-- (Insert after posts exist — use subqueries by title)

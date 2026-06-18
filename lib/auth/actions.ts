@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
 import { loginSchema, registerSchema } from './schemas';
 import { login, register } from './service';
 import type { AuthFormState } from './types';
@@ -28,16 +29,6 @@ export async function loginAction(
   if (!result.success) {
     return { serverError: result.error };
   }
-
-  // Set session cookie
-  const cookieStore = await cookies();
-  cookieStore.set('auth-token', result.user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
 
   redirect('/');
 }
@@ -67,16 +58,6 @@ export async function registerAction(
     return { serverError: result.error };
   }
 
-  // Set session cookie
-  const cookieStore = await cookies();
-  cookieStore.set('auth-token', result.user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
-
   redirect('/');
 }
 
@@ -86,7 +67,11 @@ export async function registerAction(
 
 export async function logoutAction() {
   'use server';
+
   const cookieStore = await cookies();
-  cookieStore.delete('auth-token');
+  const supabase = createClient(cookieStore);
+  await supabase.auth.signOut();
+
   redirect('/login');
 }
+

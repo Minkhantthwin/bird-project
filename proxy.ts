@@ -1,37 +1,62 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
 
 const authRoutes = ['/login', '/register'];
 const publicRoutes = ['/login', '/register', '/'];
 
-export default function proxy(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
-  const { pathname } = request.nextUrl;
+export default async function proxy(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-  // Normalize trailing slash
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value),
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
+
+  // Refresh Supabase session (important — keeps cookie fresh)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
   const normalized = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
 
-  // 1. Public routes — allow through (no auth required)
+  // 1. Public routes — allow through
   if (publicRoutes.includes(normalized)) {
-    // Still redirect authenticated users away from auth pages
-    if (token && authRoutes.includes(normalized)) {
+    // Redirect authenticated users away from auth pages
+    if (user && authRoutes.includes(normalized)) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
   // 2. Static assets — allow
   if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
   // 3. Unauthenticated → login
-  if (!token) {
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // 4. Authenticated — allow through (role checks in layouts)
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
