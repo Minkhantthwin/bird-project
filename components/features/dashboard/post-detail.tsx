@@ -1,13 +1,29 @@
-import { dummyData } from '@/lib/dummy-data';
 import { cn } from '@/lib/utils';
+import { getPostsWithMeta, getCommentsWithAuthors } from '@/lib/data-service';
+import { getSession } from '@/lib/auth/session';
+import type { ReactionType } from '@/lib/types';
 import { CommentList } from './comment-list';
+import { CommentComposer, ReactionPicker } from './post-interactions';
 
 interface PostDetailProps {
   postId: string;
 }
 
-export function PostDetail({ postId }: PostDetailProps) {
-  const post = dummyData.posts.find((p) => p.id === postId);
+const roleBadge: Record<string, string> = {
+  Admin: 'bg-rose-500/10 text-rose-500',
+  Instructor: 'bg-sky-500/10 text-sky-500',
+  Member: 'bg-emerald-500/10 text-emerald-500',
+};
+
+export async function PostDetail({ postId }: PostDetailProps) {
+  const [posts, comments, session] = await Promise.all([
+    getPostsWithMeta(),
+    getCommentsWithAuthors(postId),
+    getSession(),
+  ]);
+
+  const post = posts.find((p) => p.id === postId);
+
   if (!post) {
     return (
       <div className="py-12 text-center">
@@ -16,22 +32,17 @@ export function PostDetail({ postId }: PostDetailProps) {
     );
   }
 
-  const author = dummyData.users.find((u) => u.id === post.user_id);
-  const reactions = dummyData.reactions.filter((r) => r.post_id === post.id);
+  const { author, reactions } = post;
   const reactionCounts = reactions.reduce(
     (acc, r) => {
       acc[r.reaction_type] = (acc[r.reaction_type] ?? 0) + 1;
       return acc;
     },
-    {} as Record<string, number>,
+    {} as Partial<Record<ReactionType, number>>,
   );
-
-  const roleBadge: Record<string, string> = {
-    Admin: 'bg-rose-500/10 text-rose-500',
-    Instructor: 'bg-sky-500/10 text-sky-500',
-    Member: 'bg-emerald-500/10 text-emerald-500',
-  };
-  const role = dummyData.roles.find((r) => r.id === author?.role_id)?.name;
+  const currentReaction =
+    reactions.find((reaction) => reaction.user_id === session?.id)?.reaction_type ??
+    null;
 
   return (
     <div className="space-y-6">
@@ -39,19 +50,19 @@ export function PostDetail({ postId }: PostDetailProps) {
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-full bg-muted text-sm font-bold">
-            {author?.full_name.charAt(0)}
+            {author.full_name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-medium">{author?.full_name}</p>
-              {role && (
+              <p className="font-medium">{author.full_name}</p>
+              {author.role_name && (
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-[10px] font-medium',
-                    roleBadge[role] ?? 'bg-muted text-muted-foreground',
+                    roleBadge[author.role_name] ?? 'bg-muted text-muted-foreground',
                   )}
                 >
-                  {role}
+                  {author.role_name}
                 </span>
               )}
             </div>
@@ -71,31 +82,25 @@ export function PostDetail({ postId }: PostDetailProps) {
           {post.body}
         </p>
 
-        {/* Reactions */}
-        {Object.keys(reactionCounts).length > 0 && (
-          <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
-            {Object.entries(reactionCounts).map(([type, count]) => (
-              <span key={type}>
-                {type === 'Fire'
-                  ? '🔥'
-                  : type === 'Like'
-                    ? '👍'
-                    : type === 'Love'
-                      ? '❤️'
-                      : type === 'Celebrate'
-                        ? '🎉'
-                        : '💡'}{' '}
-                {count} {type}
-              </span>
-            ))}
-          </div>
-        )}
+        <ReactionPicker
+          postId={post.id}
+          counts={reactionCounts}
+          initialReaction={currentReaction}
+        />
       </article>
 
       {/* Comments */}
-      <section>
-        <h2 className="mb-4 font-heading text-lg font-semibold">Comments</h2>
-        <CommentList postId={post.id} />
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-heading text-lg font-semibold">
+            Comments{comments.length > 0 ? ` (${comments.length})` : ''}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Share encouragement, feedback, or a useful thought.
+          </p>
+        </div>
+        <CommentComposer postId={post.id} />
+        <CommentList comments={comments} />
       </section>
     </div>
   );

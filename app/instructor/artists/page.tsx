@@ -1,33 +1,14 @@
-import { DataTable } from '@/components/features/shared/data-table';
-import { dummyData } from '@/lib/dummy-data';
+import { InstructorArtistsManager } from '@/components/features/instructor/artists-manager';
+import {
+  getInstructorArtists,
+  getInstructorArtistUsers,
+} from '@/lib/instructor-data';
 
-export default function InstructorArtistsPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight">
-          My Artists
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Artists under your instruction.
-        </p>
-      </div>
-      <DataTable
-        keyField="id"
-        columns={[
-          {
-            header: 'Name',
-            accessor: (row) => {
-              const user = dummyData.users.find((u) => u.id === row.user_id);
-              return user?.full_name ?? 'Unknown';
-            },
-          },
-          { header: 'Stage Name', accessor: 'stage_name' },
-          { header: 'Specialty', accessor: 'specialty' },
-          { header: 'Join Date', accessor: 'join_date' },
-        ]}
-        data={dummyData.artistRecords}
-      />
-    </div>
-  );
+export default async function InstructorArtistsPage() {
+  const [artists, users] = await Promise.all([
+    getInstructorArtists(),
+    getInstructorArtistUsers(),
+  ]);
+
+  return <InstructorArtistsManager artists={artists} users={users} />;
 }

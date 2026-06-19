@@ -1,19 +1,14 @@
-import { getSession } from '@/lib/auth/session';
 import { StatCard } from '@/components/features/shared/stat-card';
 import { DataTable } from '@/components/features/shared/data-table';
 import { StatusBadge } from '@/components/features/shared/status-badge';
-import { dummyData } from '@/lib/dummy-data';
+import { getSession } from '@/lib/auth/session';
+import { getInstructorDashboardData } from '@/lib/instructor-data';
 
 export default async function InstructorDashboardPage() {
-  const session = await getSession();
-
-  const totalAttendance = dummyData.attendanceRecords.length;
-  const presentCount = dummyData.attendanceRecords.filter(
-    (a) => a.status === 'Present',
-  ).length;
-  const rate = Math.round((presentCount / totalAttendance) * 100) || 100;
-
-  const recentAttendance = dummyData.attendanceRecords.slice(-5).reverse();
+  const [session, dashboard] = await Promise.all([
+    getSession(),
+    getInstructorDashboardData(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -50,18 +45,14 @@ export default async function InstructorDashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="My Artists" value={dummyData.artistRecords.length} icon="🎨" />
-        <StatCard
-          label="Total Sessions"
-          value={totalAttendance}
-          icon="📋"
-        />
+        <StatCard label="My Artists" value={dashboard.totalArtists} icon="🎨" />
+        <StatCard label="Total Sessions" value={dashboard.totalSessions} icon="📋" />
         <StatCard
           label="Attendance Rate"
-          value={`${rate}%`}
+          value={`${dashboard.attendanceRate}%`}
           icon="✅"
           trend={
-            rate >= 80
+            dashboard.attendanceRate >= 80
               ? { value: 'Good', positive: true }
               : { value: 'Needs work', positive: false }
           }
@@ -78,15 +69,7 @@ export default async function InstructorDashboardPage() {
           columns={[
             {
               header: 'Artist',
-              accessor: (row) => {
-                const artist = dummyData.artistRecords.find(
-                  (a) => a.id === row.artist_record_id,
-                );
-                const user = artist
-                  ? dummyData.users.find((u) => u.id === artist.user_id)
-                  : null;
-                return user?.full_name ?? 'Unknown';
-              },
+              accessor: 'artist_name',
             },
             { header: 'Date', accessor: 'session_date' },
             {
@@ -99,7 +82,8 @@ export default async function InstructorDashboardPage() {
               className: 'max-w-[200px] truncate text-muted-foreground',
             },
           ]}
-          data={recentAttendance}
+          data={dashboard.recentAttendance}
+          emptyMessage="No attendance records found in Supabase."
         />
       </section>
     </div>

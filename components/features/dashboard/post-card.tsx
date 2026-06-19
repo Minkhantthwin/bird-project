@@ -1,16 +1,15 @@
 import Link from 'next/link';
-import { dummyData } from '@/lib/dummy-data';
 import { cn } from '@/lib/utils';
+import type { PostWithMeta } from '@/lib/data-service';
 
-export function PostCard({ postId }: { postId: string }) {
-  const post = dummyData.posts.find((p) => p.id === postId);
-  if (!post) return null;
+const roleBadge: Record<string, string> = {
+  Admin: 'bg-rose-500/10 text-rose-500',
+  Instructor: 'bg-sky-500/10 text-sky-500',
+  Member: 'bg-emerald-500/10 text-emerald-500',
+};
 
-  const author = dummyData.users.find((u) => u.id === post.user_id);
-  const reactions = dummyData.reactions.filter((r) => r.post_id === post.id);
-  const commentCount = dummyData.comments.filter(
-    (c) => c.post_id === post.id,
-  ).length;
+export function PostCard({ post }: { post: PostWithMeta }) {
+  const { author, reactions } = post;
 
   const reactionCounts = reactions.reduce(
     (acc, r) => {
@@ -19,14 +18,6 @@ export function PostCard({ postId }: { postId: string }) {
     },
     {} as Record<string, number>,
   );
-
-  const roleBadge: Record<string, string> = {
-    Admin: 'bg-rose-500/10 text-rose-500',
-    Instructor: 'bg-sky-500/10 text-sky-500',
-    Member: 'bg-emerald-500/10 text-emerald-500',
-  };
-
-  const role = dummyData.roles.find((r) => r.id === author?.role_id)?.name;
 
   return (
     <Link href={`/dashboard/posts/${post.id}`} className="block">
@@ -39,21 +30,21 @@ export function PostCard({ postId }: { postId: string }) {
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-full bg-muted text-xs font-bold">
-            {author?.full_name.charAt(0)}
+            {author.full_name.charAt(0)}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium truncate">
-                {author?.full_name}
+                {author.full_name}
               </p>
-              {role && (
+              {author.role_name && (
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-[10px] font-medium',
-                    roleBadge[role] ?? 'bg-muted text-muted-foreground',
+                    roleBadge[author.role_name] ?? 'bg-muted text-muted-foreground',
                   )}
                 >
-                  {role}
+                  {author.role_name}
                 </span>
               )}
             </div>
@@ -94,8 +85,8 @@ export function PostCard({ postId }: { postId: string }) {
               ))}
             </span>
           )}
-          {commentCount > 0 && (
-            <span>💬 {commentCount} comment{commentCount !== 1 ? 's' : ''}</span>
+          {post.commentCount > 0 && (
+            <span>💬 {post.commentCount} comment{post.commentCount !== 1 ? 's' : ''}</span>
           )}
         </div>
       </article>

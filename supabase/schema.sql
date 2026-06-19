@@ -28,12 +28,14 @@ CREATE INDEX IF NOT EXISTS idx_profiles_email   ON public.profiles (email);
 CREATE TABLE IF NOT EXISTS public.artist_records (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     UUID UNIQUE NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  instructor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   stage_name  TEXT,
   specialty   TEXT,
   join_date   DATE NOT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_artist_records_user_id ON public.artist_records (user_id);
+CREATE INDEX IF NOT EXISTS idx_artist_records_instructor_id ON public.artist_records (instructor_id);
 
 -- 4. Attendance
 CREATE TABLE IF NOT EXISTS public.attendance (

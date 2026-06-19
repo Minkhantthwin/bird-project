@@ -21,6 +21,7 @@ export default async function InstructorLayout({
         { href: '/instructor/injuries', label: 'Injuries', icon: '🏥' },
         { href: '/instructor/artists', label: 'My Artists', icon: '🎨' },
         { href: '/instructor/posts', label: 'My Posts', icon: '📝' },
+        { href: '/instructor/posts/all', label: 'All Posts', icon: '📰' },
       ]}
     >
       {children}

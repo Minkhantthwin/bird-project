@@ -1,24 +1,13 @@
-import { dummyData } from '@/lib/dummy-data';
 import { StatusBadge } from '@/components/features/shared/status-badge';
 import { DataTable } from '@/components/features/shared/data-table';
+import { getUserAttendanceData } from '@/lib/data-service';
 
 interface AttendanceTableProps {
   userId: string;
 }
 
-export function AttendanceTable({ userId }: AttendanceTableProps) {
-  const userAttendance = dummyData.attendanceRecords.filter((a) => {
-    const artist = dummyData.artistRecords.find(
-      (ar) => ar.id === a.artist_record_id,
-    );
-    return artist?.user_id === userId;
-  });
-
-  const presentCount = userAttendance.filter((a) => a.status === 'Present').length;
-  const rate =
-    userAttendance.length > 0
-      ? Math.round((presentCount / userAttendance.length) * 100)
-      : 0;
+export async function AttendanceTable({ userId }: AttendanceTableProps) {
+  const data = await getUserAttendanceData(userId);
 
   return (
     <div className="space-y-6">
@@ -27,16 +16,16 @@ export function AttendanceTable({ userId }: AttendanceTableProps) {
         <div className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-xl">
           <p className="text-xs text-muted-foreground">Total Sessions</p>
           <p className="mt-1 font-heading text-xl font-bold">
-            {userAttendance.length}
+            {data.totalSessions}
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-xl">
           <p className="text-xs text-muted-foreground">Attendance Rate</p>
-          <p className="mt-1 font-heading text-xl font-bold">{rate}%</p>
+          <p className="mt-1 font-heading text-xl font-bold">{data.attendanceRate}%</p>
         </div>
         <div className="rounded-2xl border border-border bg-card/60 p-4 backdrop-blur-xl">
           <p className="text-xs text-muted-foreground">Present Sessions</p>
-          <p className="mt-1 font-heading text-xl font-bold">{presentCount}</p>
+          <p className="mt-1 font-heading text-xl font-bold">{data.presentCount}</p>
         </div>
       </div>
 
@@ -55,11 +44,7 @@ export function AttendanceTable({ userId }: AttendanceTableProps) {
             className: 'max-w-[250px] truncate text-muted-foreground',
           },
         ]}
-        data={userAttendance.sort(
-          (a, b) =>
-            new Date(b.session_date).getTime() -
-            new Date(a.session_date).getTime(),
-        )}
+        data={data.records}
         emptyMessage="No attendance records found."
       />
     </div>
