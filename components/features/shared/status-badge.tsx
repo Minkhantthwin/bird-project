@@ -1,6 +1,16 @@
 import { cn } from '@/lib/utils';
 
-type StatusType = 'Present' | 'Absent' | 'Late' | 'Recovering' | 'Cleared' | 'Under Treatment';
+type StatusType =
+  | 'Present'
+  | 'Absent'
+  | 'Late'
+  | 'Recovering'
+  | 'Cleared'
+  | 'Under Treatment'
+  | 'Admin'
+  | 'Instructor'
+  | 'Member'
+  | 'Unknown';
 
 const statusStyles: Record<string, string> = {
   Present: 'bg-emerald-500/10 text-emerald-500',
@@ -9,6 +19,10 @@ const statusStyles: Record<string, string> = {
   Recovering: 'bg-amber-500/10 text-amber-500',
   Cleared: 'bg-emerald-500/10 text-emerald-500',
   'Under Treatment': 'bg-rose-500/10 text-rose-500',
+  Admin: 'bg-violet-500/10 text-violet-500',
+  Instructor: 'bg-sky-500/10 text-sky-500',
+  Member: 'bg-muted text-muted-foreground',
+  Unknown: 'bg-muted text-muted-foreground',
 };
 
 interface StatusBadgeProps {

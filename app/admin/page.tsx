@@ -2,19 +2,18 @@ import { getSession } from '@/lib/auth/session';
 import { StatCard } from '@/components/features/shared/stat-card';
 import { StatusBadge } from '@/components/features/shared/status-badge';
 import { DataTable } from '@/components/features/shared/data-table';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminDashboardData } from '@/lib/admin-data';
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
-
-  const totalUsers = dummyData.users.length;
-  const totalArtists = dummyData.artistRecords.length;
-  const totalPosts = dummyData.posts.length;
-  const recoveringInjuries = dummyData.injuries.filter(
-    (i) => i.status === 'Recovering' || i.status === 'Under Treatment',
-  ).length;
-
-  const recentAttendance = dummyData.attendanceRecords.slice(-5).reverse();
+  const {
+    totalUsers,
+    totalArtists,
+    totalPosts,
+    activeInjuries,
+    recentAttendance,
+    recentInjuries,
+  } = await getAdminDashboardData();
 
   return (
     <div className="space-y-8">
@@ -32,10 +31,10 @@ export default async function AdminDashboardPage() {
         <StatCard label="Total Posts" value={totalPosts} icon="📝" />
         <StatCard
           label="Active Injuries"
-          value={recoveringInjuries}
+          value={activeInjuries}
           icon="🏥"
           trend={
-            recoveringInjuries > 0
+            activeInjuries > 0
               ? { value: 'Needs attention', positive: false }
               : undefined
           }
@@ -52,15 +51,7 @@ export default async function AdminDashboardPage() {
           columns={[
             {
               header: 'Artist',
-              accessor: (row) => {
-                const artist = dummyData.artistRecords.find(
-                  (a) => a.id === row.artist_record_id,
-                );
-                const user = artist
-                  ? dummyData.users.find((u) => u.id === artist.user_id)
-                  : null;
-                return user?.full_name ?? 'Unknown';
-              },
+              accessor: 'artist_name',
             },
             { header: 'Date', accessor: 'session_date' },
             {
@@ -74,6 +65,7 @@ export default async function AdminDashboardPage() {
             },
           ]}
           data={recentAttendance}
+          emptyMessage="No attendance records found in Supabase."
         />
       </section>
 
@@ -87,15 +79,7 @@ export default async function AdminDashboardPage() {
           columns={[
             {
               header: 'Artist',
-              accessor: (row) => {
-                const artist = dummyData.artistRecords.find(
-                  (a) => a.id === row.artist_record_id,
-                );
-                const user = artist
-                  ? dummyData.users.find((u) => u.id === artist.user_id)
-                  : null;
-                return user?.full_name ?? 'Unknown';
-              },
+              accessor: 'artist_name',
             },
             { header: 'Date', accessor: 'incident_date' },
             {
@@ -112,7 +96,8 @@ export default async function AdminDashboardPage() {
               className: 'max-w-[200px] truncate text-muted-foreground',
             },
           ]}
-          data={dummyData.injuries}
+          data={recentInjuries}
+          emptyMessage="No injury records found in Supabase."
         />
       </section>
     </div>

@@ -1,8 +1,10 @@
 import { DataTable } from '@/components/features/shared/data-table';
 import { StatusBadge } from '@/components/features/shared/status-badge';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminUsers } from '@/lib/admin-data';
 
-export default function AdminUsersPage() {
+export default async function AdminUsersPage() {
+  const users = await getAdminUsers();
+
   return (
     <div className="space-y-6">
       <div>
@@ -20,24 +22,12 @@ export default function AdminUsersPage() {
           { header: 'Email', accessor: 'email' },
           {
             header: 'Role',
-            accessor: (row) => {
-              const role = dummyData.roles.find((r) => r.id === row.role_id);
-              return (
-                <StatusBadge
-                  status={
-                    role?.name === 'Admin'
-                      ? 'Present'
-                      : role?.name === 'Instructor'
-                        ? 'Late'
-                        : 'Absent'
-                  }
-                />
-              );
-            },
+            accessor: (row) => <StatusBadge status={row.role_name} />,
           },
           { header: 'Joined', accessor: 'created_at' },
         ]}
-        data={dummyData.users}
+        data={users}
+        emptyMessage="No users found in Supabase."
       />
     </div>
   );

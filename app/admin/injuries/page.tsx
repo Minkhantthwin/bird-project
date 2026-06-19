@@ -1,8 +1,10 @@
 import { DataTable } from '@/components/features/shared/data-table';
 import { StatusBadge } from '@/components/features/shared/status-badge';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminInjuries } from '@/lib/admin-data';
 
-export default function AdminInjuriesPage() {
+export default async function AdminInjuriesPage() {
+  const injuries = await getAdminInjuries();
+
   return (
     <div className="space-y-6">
       <div>
@@ -18,15 +20,7 @@ export default function AdminInjuriesPage() {
         columns={[
           {
             header: 'Artist',
-            accessor: (row) => {
-              const artist = dummyData.artistRecords.find(
-                (a) => a.id === row.artist_record_id,
-              );
-              const user = artist
-                ? dummyData.users.find((u) => u.id === artist.user_id)
-                : null;
-              return user?.full_name ?? 'Unknown';
-            },
+            accessor: 'artist_name',
           },
           { header: 'Date', accessor: 'incident_date' },
           { header: 'Severity', accessor: 'severity' },
@@ -40,7 +34,8 @@ export default function AdminInjuriesPage() {
             className: 'max-w-[250px] truncate text-muted-foreground',
           },
         ]}
-        data={dummyData.injuries}
+        data={injuries}
+        emptyMessage="No injury records found in Supabase."
       />
     </div>
   );

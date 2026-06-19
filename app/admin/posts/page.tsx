@@ -1,7 +1,9 @@
 import { DataTable } from '@/components/features/shared/data-table';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminPosts } from '@/lib/admin-data';
 
-export default function AdminPostsPage() {
+export default async function AdminPostsPage() {
+  const posts = await getAdminPosts();
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,10 +19,7 @@ export default function AdminPostsPage() {
         columns={[
           {
             header: 'Author',
-            accessor: (row) => {
-              const user = dummyData.users.find((u) => u.id === row.user_id);
-              return user?.full_name ?? 'Unknown';
-            },
+            accessor: 'author_name',
           },
           { header: 'Title', accessor: 'title' },
           {
@@ -33,7 +32,8 @@ export default function AdminPostsPage() {
           },
           { header: 'Created', accessor: 'created_at' },
         ]}
-        data={dummyData.posts}
+        data={posts}
+        emptyMessage="No posts found in Supabase."
       />
     </div>
   );

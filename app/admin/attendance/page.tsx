@@ -1,8 +1,10 @@
 import { DataTable } from '@/components/features/shared/data-table';
 import { StatusBadge } from '@/components/features/shared/status-badge';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminAttendance } from '@/lib/admin-data';
 
-export default function AdminAttendancePage() {
+export default async function AdminAttendancePage() {
+  const attendance = await getAdminAttendance();
+
   return (
     <div className="space-y-6">
       <div>
@@ -18,15 +20,7 @@ export default function AdminAttendancePage() {
         columns={[
           {
             header: 'Artist',
-            accessor: (row) => {
-              const artist = dummyData.artistRecords.find(
-                (a) => a.id === row.artist_record_id,
-              );
-              const user = artist
-                ? dummyData.users.find((u) => u.id === artist.user_id)
-                : null;
-              return user?.full_name ?? 'Unknown';
-            },
+            accessor: 'artist_name',
           },
           { header: 'Date', accessor: 'session_date' },
           {
@@ -39,7 +33,8 @@ export default function AdminAttendancePage() {
             className: 'max-w-[250px] truncate text-muted-foreground',
           },
         ]}
-        data={dummyData.attendanceRecords}
+        data={attendance}
+        emptyMessage="No attendance records found in Supabase."
       />
     </div>
   );

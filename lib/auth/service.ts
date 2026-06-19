@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { isDummyDataEnabled } from '@/lib/env';
 import { dummyData } from '@/lib/dummy-data';
-import type { AuthResult, SessionUser } from './types';
+import { isUserRole, type AuthResult, type SessionUser } from './types';
 import type { LoginInput, RegisterInput } from './schemas';
 
 // ── Helpers ──────────────────────────────────────────
@@ -12,7 +12,13 @@ function mapDummyUserToSessionUser(
 ): SessionUser {
   const role =
     dummyData.roles.find((r) => r.id === user.role_id)?.name ?? 'Member';
-  return { id: user.id, email: user.email, fullName: user.full_name, role };
+
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name,
+    role: isUserRole(role) ? role : 'Member',
+  };
 }
 
 // ══════════════════════════════════════════════════════
@@ -37,19 +43,31 @@ async function supabaseLogin(input: LoginInput): Promise<AuthResult> {
   }
 
   // Fetch profile + role from public.profiles
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('*, roles(name)')
+    .select('full_name, roles(name)')
     .eq('id', data.user.id)
     .single();
+
+  const role = (profile as { roles: { name: unknown } | null } | null)?.roles
+    ?.name;
+
+  if (profileError || !profile || !isUserRole(role)) {
+    console.error('Profile role lookup failed after login:', profileError);
+    await supabase.auth.signOut();
+    return {
+      success: false,
+      error: 'Your account profile could not be loaded. Please contact an administrator.',
+    };
+  }
 
   return {
     success: true,
     user: {
       id: data.user.id,
       email: data.user.email!,
-      fullName: profile?.full_name ?? 'User',
-      role: (profile as any)?.roles?.name ?? 'Member',
+      fullName: profile.full_name,
+      role,
     },
   };
 }
@@ -150,4 +168,3 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
   if (isDummyDataEnabled()) return dummyRegister(input);
   return supabaseRegister(input);
 }
-

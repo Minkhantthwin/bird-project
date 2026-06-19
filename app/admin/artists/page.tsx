@@ -1,7 +1,9 @@
 import { DataTable } from '@/components/features/shared/data-table';
-import { dummyData } from '@/lib/dummy-data';
+import { getAdminArtists } from '@/lib/admin-data';
 
-export default function AdminArtistsPage() {
+export default async function AdminArtistsPage() {
+  const artists = await getAdminArtists();
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,16 +19,14 @@ export default function AdminArtistsPage() {
         columns={[
           {
             header: 'Name',
-            accessor: (row) => {
-              const user = dummyData.users.find((u) => u.id === row.user_id);
-              return user?.full_name ?? 'Unknown';
-            },
+            accessor: 'full_name',
           },
           { header: 'Stage Name', accessor: 'stage_name' },
           { header: 'Specialty', accessor: 'specialty' },
           { header: 'Join Date', accessor: 'join_date' },
         ]}
-        data={dummyData.artistRecords}
+        data={artists}
+        emptyMessage="No artist records found in Supabase."
       />
     </div>
   );

@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { dummyData } from '@/lib/dummy-data';
 import { isDummyDataEnabled } from '@/lib/env';
-import type { SessionUser } from './types';
+import { isUserRole, type SessionUser } from './types';
 
 /**
  * Server-side session resolver.
@@ -27,7 +27,7 @@ export async function getSession(): Promise<SessionUser | null> {
       id: user.id,
       email: user.email,
       fullName: user.full_name,
-      role,
+      role: isUserRole(role) ? role : 'Member',
     };
   }
 
@@ -40,17 +40,25 @@ export async function getSession(): Promise<SessionUser | null> {
   if (error || !user) return null;
 
   // Fetch profile + role from public.profiles
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('full_name, roles(name)')
     .eq('id', user.id)
     .single();
 
+  const role = (profile as { roles: { name: unknown } | null } | null)?.roles
+    ?.name;
+
+  if (profileError || !profile || !isUserRole(role)) {
+    throw new Error('Authenticated user has no readable profile role.', {
+      cause: profileError,
+    });
+  }
+
   return {
     id: user.id,
     email: user.email!,
-    fullName: profile?.full_name ?? user.email?.split('@')[0] ?? 'User',
-    role: (profile as any)?.roles?.name ?? 'Member',
+    fullName: profile.full_name,
+    role,
   };
 }
-
