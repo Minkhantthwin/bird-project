@@ -27,6 +27,18 @@ const reactionTypes = [
 ] as const satisfies readonly ReactionType[];
 
 const postIdSchema = z.string().uuid('Invalid post ID');
+const postSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Give your post a title.')
+    .max(255, 'Title must be 255 characters or fewer.'),
+  body: z
+    .string()
+    .trim()
+    .min(1, 'Write something for your post.')
+    .max(10000, 'Post body must be 10,000 characters or fewer.'),
+});
 const commentSchema = z.object({
   postId: postIdSchema,
   content: z
@@ -159,6 +171,39 @@ export async function toggleReactionAction(
       message: activeReaction ? `${activeReaction} reaction saved.` : 'Reaction removed.',
       activeReaction,
     };
+  } catch (error) {
+    return failed(error);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// Create Post
+// ══════════════════════════════════════════════════════
+
+export async function createPostAction(
+  _state: DashboardActionState,
+  formData: FormData,
+): Promise<DashboardActionState> {
+  try {
+    const { supabase, user } = await requireAuthenticatedUser();
+    const parsed = postSchema.safeParse({
+      title: formData.get('title'),
+      body: formData.get('body'),
+    });
+
+    if (!parsed.success) return invalid(parsed.error);
+
+    const { title, body } = parsed.data;
+    const { error } = await supabase.from('posts').insert({
+      user_id: user.id,
+      title,
+      body,
+    });
+
+    if (error) throw new Error(`Unable to create post: ${error.message}`);
+
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Post published!' };
   } catch (error) {
     return failed(error);
   }

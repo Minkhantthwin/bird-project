@@ -1,5 +1,6 @@
 import { getSession } from '@/lib/auth/session';
 import { Feed } from '@/components/features/dashboard/feed';
+import { CreatePostCard } from '@/components/features/dashboard/create-post-card';
 
 export default async function DashboardFeedPage() {
   const session = await getSession();
@@ -14,6 +15,7 @@ export default async function DashboardFeedPage() {
           Your attanDANCE feed
         </p>
       </div>
+      <CreatePostCard />
       <Feed />
     </div>
   );
