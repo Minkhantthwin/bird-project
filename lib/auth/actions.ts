@@ -3,8 +3,8 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
-import { loginSchema, registerSchema } from './schemas';
-import { login, register } from './service';
+import { loginSchema, registerSchema, verifyOtpSchema } from './schemas';
+import { login, register, resendRegistrationOtp, verifyRegistrationOtp } from './service';
 import type { AuthFormState } from './types';
 
 // ══════════════════════════════════════════════════════
@@ -58,7 +58,56 @@ export async function registerAction(
     return { serverError: result.error };
   }
 
+  if (result.requiresVerification) {
+    redirect(`/register/verify?email=${encodeURIComponent(result.email)}`);
+  }
+
   redirect('/');
+}
+
+export async function verifyRegisterOtpAction(
+  _prevState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const parsed = verifyOtpSchema.safeParse({
+    email: formData.get('email'),
+    token: formData.get('token'),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const result = await verifyRegistrationOtp(parsed.data);
+
+  if (!result.success) {
+    return { serverError: result.error };
+  }
+
+  redirect('/');
+}
+
+export async function resendRegisterOtpAction(
+  _prevState: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const email = formData.get('email');
+  const parsed = verifyOtpSchema.shape.email.safeParse(email);
+
+  if (!parsed.success) {
+    return { errors: { email: parsed.error.issues.map((issue) => issue.message) } };
+  }
+
+  const result = await resendRegistrationOtp(parsed.data);
+
+  if (!result.success) {
+    return { serverError: result.error };
+  }
+
+  return {
+    success: true,
+    message: 'A fresh verification code is on its way to your inbox.',
+  };
 }
 
 // ══════════════════════════════════════════════════════
@@ -74,4 +123,3 @@ export async function logoutAction() {
 
   redirect('/login');
 }
-

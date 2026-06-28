@@ -2,8 +2,13 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { isDummyDataEnabled } from '@/lib/env';
 import { dummyData } from '@/lib/dummy-data';
-import { isUserRole, type AuthResult, type SessionUser } from './types';
-import type { LoginInput, RegisterInput } from './schemas';
+import {
+  isUserRole,
+  type AuthResult,
+  type RegisterResult,
+  type SessionUser,
+} from './types';
+import type { LoginInput, RegisterInput, VerifyOtpInput } from './schemas';
 
 // ── Helpers ──────────────────────────────────────────
 
@@ -72,11 +77,42 @@ async function supabaseLogin(input: LoginInput): Promise<AuthResult> {
   };
 }
 
-async function supabaseRegister(input: RegisterInput): Promise<AuthResult> {
+async function ensureMemberProfile(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  email: string,
+  fullName: string,
+) {
+  const { data: memberRole, error: roleError } = await supabase
+    .from('roles')
+    .select('id')
+    .eq('name', 'Member')
+    .single();
+
+  if (roleError || !memberRole?.id) {
+    console.error('Member role lookup failed:', roleError);
+    return;
+  }
+
+  const { error: profileError } = await supabase.from('profiles').upsert(
+    {
+      id: userId,
+      role_id: memberRole.id,
+      email,
+      full_name: fullName,
+    },
+    { onConflict: 'id' },
+  );
+
+  if (profileError) {
+    console.error('Profile upsert failed:', profileError.message);
+  }
+}
+
+async function supabaseRegister(input: RegisterInput): Promise<RegisterResult> {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // 1. Create auth user
   const { data, error } = await supabase.auth.signUp({
     email: input.email,
     password: input.password,
@@ -89,36 +125,80 @@ async function supabaseRegister(input: RegisterInput): Promise<AuthResult> {
     return { success: false, error: error.message };
   }
 
-  if (!data.user) {
+  if (!data.user || !data.user.email) {
     return { success: false, error: 'Registration failed. Please try again.' };
   }
 
-  // 2. Insert profile row
-  const { data: memberRole } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('name', 'Member')
-    .single();
+  return {
+    success: true,
+    email: data.user.email,
+    requiresVerification: !data.session,
+  };
+}
 
-  const { error: profileError } = await supabase.from('profiles').insert({
-    id: data.user.id,
-    role_id: memberRole?.id,
+async function supabaseVerifyOtp(input: VerifyOtpInput): Promise<AuthResult> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data, error } = await supabase.auth.verifyOtp({
     email: input.email,
-    full_name: input.fullName,
+    token: input.token,
+    type: 'email',
   });
 
-  if (profileError) {
-    // Profile insert failed, but auth user was created.
-    // In production, use a database trigger instead.
-    console.error('Profile creation failed:', profileError.message);
+  if (error) {
+    return { success: false, error: error.message };
   }
+
+  if (!data.user || !data.user.email) {
+    return {
+      success: false,
+      error: 'Verification failed. Please request a new code and try again.',
+    };
+  }
+
+  const fullName =
+    typeof data.user.user_metadata?.full_name === 'string'
+      ? data.user.user_metadata.full_name
+      : data.user.email.split('@')[0];
+
+  await ensureMemberProfile(
+    supabase,
+    data.user.id,
+    data.user.email,
+    fullName,
+  );
 
   return {
     success: true,
     user: {
       id: data.user.id,
-      email: data.user.email!,
-      fullName: input.fullName,
+      email: data.user.email,
+      fullName,
+      role: 'Member',
+    },
+  };
+}
+
+async function supabaseResendVerification(email: string): Promise<AuthResult> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return {
+    success: true,
+    user: {
+      id: 'pending-verification',
+      email,
+      fullName: '',
       role: 'Member',
     },
   };
@@ -136,7 +216,7 @@ async function dummyLogin(input: LoginInput): Promise<AuthResult> {
   return { success: true, user: mapDummyUserToSessionUser(user) };
 }
 
-async function dummyRegister(input: RegisterInput): Promise<AuthResult> {
+async function dummyRegister(input: RegisterInput): Promise<RegisterResult> {
   const exists = dummyData.users.find((u) => u.email === input.email);
   if (exists) {
     return {
@@ -146,12 +226,8 @@ async function dummyRegister(input: RegisterInput): Promise<AuthResult> {
   }
   return {
     success: true,
-    user: {
-      id: `user-new-${Date.now()}`,
-      email: input.email,
-      fullName: input.fullName,
-      role: 'Member',
-    },
+    email: input.email,
+    requiresVerification: false,
   };
 }
 
@@ -164,7 +240,41 @@ export async function login(input: LoginInput): Promise<AuthResult> {
   return supabaseLogin(input);
 }
 
-export async function register(input: RegisterInput): Promise<AuthResult> {
+export async function register(input: RegisterInput): Promise<RegisterResult> {
   if (isDummyDataEnabled()) return dummyRegister(input);
   return supabaseRegister(input);
+}
+
+export async function verifyRegistrationOtp(
+  input: VerifyOtpInput,
+): Promise<AuthResult> {
+  if (isDummyDataEnabled()) {
+    return {
+      success: true,
+      user: {
+        id: `user-new-${Date.now()}`,
+        email: input.email,
+        fullName: input.email.split('@')[0],
+        role: 'Member',
+      },
+    };
+  }
+
+  return supabaseVerifyOtp(input);
+}
+
+export async function resendRegistrationOtp(email: string): Promise<AuthResult> {
+  if (isDummyDataEnabled()) {
+    return {
+      success: true,
+      user: {
+        id: 'pending-verification',
+        email,
+        fullName: '',
+        role: 'Member',
+      },
+    };
+  }
+
+  return supabaseResendVerification(email);
 }

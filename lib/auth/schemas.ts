@@ -38,3 +38,17 @@ export const registerSchema = z
   });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const verifyOtpSchema = z.object({
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email'),
+  token: z
+    .string()
+    .trim()
+    .length(6, 'Verification code must be 6 digits')
+    .regex(/^\d{6}$/, 'Verification code must contain only numbers'),
+});
+
+export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

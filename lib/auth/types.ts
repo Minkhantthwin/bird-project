@@ -19,8 +19,17 @@ export type AuthResult =
   | { success: true; user: SessionUser }
   | { success: false; error: string };
 
+export type RegisterResult =
+  | {
+      success: true;
+      email: string;
+      requiresVerification: boolean;
+    }
+  | { success: false; error: string };
+
 export interface AuthFormState {
   errors?: Record<string, string[]>;
   serverError?: string;
   success?: boolean;
+  message?: string;
 }
