@@ -52,7 +52,7 @@ export function RegisterForm() {
   return (
     <AuthCard
       title="Join the crew"
-      subtitle="Create your account, then confirm it with a 6-digit email code"
+      subtitle="Create your account, then confirm it with an email code"
       footerLabel="Already a member?"
       footerHref="/login"
     >

@@ -47,8 +47,8 @@ export const verifyOtpSchema = z.object({
   token: z
     .string()
     .trim()
-    .length(6, 'Verification code must be 6 digits')
-    .regex(/^\d{6}$/, 'Verification code must contain only numbers'),
+    .length(8, 'Verification code must be 8 digits')
+    .regex(/^\d{8}$/, 'Verification code must contain only numbers'),
 });
 
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

@@ -76,7 +76,7 @@ export function RegisterOtpForm({ email }: RegisterOtpFormProps) {
   return (
     <AuthCard
       title="Check your inbox"
-      subtitle={`We sent a 6-digit verification code to ${email}`}
+      subtitle={`We sent an 8-digit verification code to ${email}`}
       footerLabel="Entered the wrong email?"
       footerHref="/register"
     >
@@ -90,8 +90,8 @@ export function RegisterOtpForm({ email }: RegisterOtpFormProps) {
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            placeholder="123456"
-            maxLength={6}
+            placeholder="12345678"
+            maxLength={8}
             disabled={verifyPending}
             {...register('token')}
           />
